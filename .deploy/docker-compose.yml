@@ -3,14 +3,13 @@ version: '3.8'
 services:
   backend:
     container_name: backend
-    build:
-      context: ..
-      dockerfile: .deploy/backend.Dockerfile
+    image: ghcr.io/d1zero/f1-telemetry-scan/backend:1.0.0
     ports:
       - "20777:20777/udp"
 
   frontend:
     container_name: frontend
+    image: ghcr.io/d1zero/f1-telemetry-scan/frontend:1.0.0
     build:
       context: ..
       dockerfile: .deploy/frontend.Dockerfile
