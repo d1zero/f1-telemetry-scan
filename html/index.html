@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Ultimate Dashboard</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .status {
+            margin-bottom: 20px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .offline {
+            background: #b71c1c;
+            color: #ffcdd2;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border-top: 4px solid #333;
+        }
+
+        .card-header {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Главные цифры */
+        .main-stats {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            text-align: center;
+        }
+
+        .big-val {
+            font-size: 3.5rem;
+            font-weight: bold;
+            font-family: monospace;
+            line-height: 1;
+        }
+
+        .unit {
+            font-size: 1rem;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        /* Обороты (RPM Bar) */
+        .rpm-container {
+            margin-top: 15px;
+        }
+
+        .rpm-track {
+            width: 100%;
+            background: #333;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .rpm-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
+            transition: width 0.1s linear;
+        }
+
+        /* Руль (Steering) */
+        .steer-track {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .steer-marker {
+            width: 4px;
+            height: 20px;
+            background: #ff1801;
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.05s linear;
+        }
+
+        /* Педали */
+        .pedals-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            height: 120px;
+            align-items: flex-end;
+        }
+
+        .pedal-box {
+            width: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .pedal-bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.05s linear;
+        }
+
+        .clutch {
+            background: #2196f3;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .brake {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .throttle {
+            background: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Колеса 2x2 */
+        .wheel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .wheel-card {
+            background: #252525;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff1801;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wheel-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .wheel-temp {
+            font-size: 1.4rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .wheel-sub {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .drs-inactive {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div id="status" class="status offline">OFFLINE</div>
+
+<div class="dashboard">
+    <div class="card" style="border-top-color: #ff1801;">
+        <div class="card-header">Main Telemetry</div>
+        <div class="main-stats">
+            <div>
+                <div class="big-val" id="speed">0</div>
+                <div class="unit">KM/H</div>
+            </div>
+            <div>
+                <div class="big-val" id="gear" style="color: #ff1801;">N</div>
+                <div class="unit">GEAR</div>
+            </div>
+        </div>
+        <div class="rpm-container">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                <span>RPM</span>
+                <span id="rpm-text">0</span>
+            </div>
+            <div class="rpm-track">
+                <div id="rpm-bar" class="rpm-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border-top-color: #2196f3;">
+        <div class="card-header">Steering & Pedals</div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-family: monospace;">
+            <span>LEFT</span>
+            <span id="steer-val">0.00</span>
+            <span>RIGHT</span>
+        </div>
+        <div class="steer-track">
+            <div id="steer-marker" class="steer-marker"></div>
+        </div>
+
+        <div class="pedals-container">
+            <div class="pedal-box">
+                <div id="clutch-bar" class="pedal-bar clutch" style="height: 0%;"></div>
+                <div class="unit" style="font-size: 0.7rem; margin-top: 5px;">CLU</div>
+            </div>
+            <div class="pedal-box">
+                <div id="brake-bar" class="pedal-bar brake" style="height: 0%;"></div>
+                <div class="unit" style="font-size: 0.7rem; margin-top: 5px;">BRK</div>
+            </div>
+            <div class="pedal-box">
+                <div id="throttle-bar" class="pedal-bar throttle" style="height: 0%;"></div>
+                <div class="unit" style="font-size: 0.7rem; margin-top: 5px;">GAS</div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 15px;">
+            <div id="drs-label" class="drs-inactive">DRS CLOSED</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Tyres: Temp & Surface</div>
+        <div class="wheel-grid">
+            <div class="wheel-card">
+                <span class="wheel-label">FRONT LEFT</span>
+                <span class="wheel-temp" id="t-fl">0°</span>
+                <span class="wheel-sub" id="s-fl">Tarmac</span>
+            </div>
+            <div class="wheel-card">
+                <span class="wheel-label">FRONT RIGHT</span>
+                <span class="wheel-temp" id="t-fr">0°</span>
+                <span class="wheel-sub" id="s-fr">Tarmac</span>
+            </div>
+            <div class="wheel-card">
+                <span class="wheel-label">REAR LEFT</span>
+                <span class="wheel-temp" id="t-rl">0°</span>
+                <span class="wheel-sub" id="s-rl">Tarmac</span>
+            </div>
+            <div class="wheel-card">
+                <span class="wheel-label">REAR RIGHT</span>
+                <span class="wheel-temp" id="t-rr">0°</span>
+                <span class="wheel-sub" id="s-rr">Tarmac</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border-top-color: #ff9800;">
+        <div class="card-header">Brake Temps & Engine</div>
+        <div class="wheel-grid">
+            <div class="wheel-card" style="border-left-color: #ff9800;">
+                <span class="wheel-label">FL BRAKE</span>
+                <span class="wheel-temp" id="b-fl">0°</span>
+            </div>
+            <div class="wheel-card" style="border-left-color: #ff9800;">
+                <span class="wheel-label">FR BRAKE</span>
+                <span class="wheel-temp" id="b-fr">0°</span>
+            </div>
+            <div class="wheel-card" style="border-left-color: #ff9800;">
+                <span class="wheel-label">RL BRAKE</span>
+                <span class="wheel-temp" id="b-rl">0°</span>
+            </div>
+            <div class="wheel-card" style="border-left-color: #ff9800;">
+                <span class="wheel-label">RR BRAKE</span>
+                <span class="wheel-temp" id="b-rr">0°</span>
+            </div>
+        </div>
+        <div style="margin-top: 15px; text-align: center; border-top: 1px solid #333; padding-top: 10px;">
+            <span class="unit">ENGINE TEMP:</span>
+            <span id="eng-temp" style="font-weight: bold; font-family: monospace; font-size: 1.2rem;">0°C</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const surfaceTypes = {
+        0: "Tarmac", 1: "Rumble", 2: "Grass", 3: "Dirt", 4: "Gravel", 5: "Kerb", 6: "Sand", 7: "Grass"
+    };
+
+    const socket = new WebSocket("ws://127.0.0.1/telemetry");
+    const statusEl = document.getElementById('status');
+
+    socket.onopen = () => {
+        statusEl.innerText = "LIVE CONNECTION";
+        statusEl.className = "status online";
+    };
+
+    socket.onclose = () => {
+        statusEl.innerText = "OFFLINE";
+        statusEl.className = "status offline";
+    };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        // Основное
+        document.getElementById('speed').innerText = data.speed;
+        document.getElementById('rpm-text').innerText = data.rpm;
+        let gear = data.gear;
+        document.getElementById('gear').innerText = gear === -1 ? "R" : gear === 0 ? "N" : gear;
+
+        // RPM Bar
+        const rpmPct = Math.min((data.rpm / 13500) * 100, 100);
+        document.getElementById('rpm-bar').style.width = rpmPct + "%";
+
+        // Руль (Steer от -1 до 1)
+        const steerPercent = ((data.steer + 1) / 2) * 100;
+        document.getElementById('steer-marker').style.left = steerPercent + "%";
+        document.getElementById('steer-val').innerText = data.steer.toFixed(2);
+
+        // Педали
+        document.getElementById('throttle-bar').style.height = (data.throttle * 100) + "%";
+        document.getElementById('brake-bar').style.height = (data.brake * 100) + "%";
+        document.getElementById('clutch-bar').style.height = data.clutch + "%";
+
+        // DRS
+        const drsLabel = document.getElementById('drs-label');
+        if (data.drs === 1) {
+            drsLabel.innerText = "DRS OPEN";
+            drsLabel.className = "drs-active";
+        } else {
+            drsLabel.innerText = "DRS CLOSED";
+            drsLabel.className = "drs-inactive";
+        }
+
+        // Шины (2-FL, 3-FR, 0-RL, 1-RR)
+        document.getElementById('t-fl').innerText = data.tyres_surface_temp[2] + "°";
+        document.getElementById('t-fr').innerText = data.tyres_surface_temp[3] + "°";
+        document.getElementById('t-rl').innerText = data.tyres_surface_temp[0] + "°";
+        document.getElementById('t-rr').innerText = data.tyres_surface_temp[1] + "°";
+
+        document.getElementById('s-fl').innerText = surfaceTypes[data.surface_type[2]] || "Unknown";
+        document.getElementById('s-fr').innerText = surfaceTypes[data.surface_type[3]] || "Unknown";
+        document.getElementById('s-rl').innerText = surfaceTypes[data.surface_type[0]] || "Unknown";
+        document.getElementById('s-rr').innerText = surfaceTypes[data.surface_type[1]] || "Unknown";
+
+        // Тормоза
+        document.getElementById('b-fl').innerText = data.brakes_temp[2] + "°";
+        document.getElementById('b-fr').innerText = data.brakes_temp[3] + "°";
+        document.getElementById('b-rl').innerText = data.brakes_temp[0] + "°";
+        document.getElementById('b-rr').innerText = data.brakes_temp[1] + "°";
+
+        // Двигатель
+        document.getElementById('eng-temp').innerText = data.engine_temp + "°C";
+    };
+</script>
+</body>
+</html>
