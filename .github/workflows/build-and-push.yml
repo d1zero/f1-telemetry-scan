@@ -6,13 +6,18 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to use for the Docker image'
+      backend-version:
+        description: 'Version to use for the Backend Docker image'
+        required: true
+        default: '1.0.0'
+
+      frontend-version:
+        description: 'Version to use for the Frontend Docker image'
         required: true
         default: '1.0.0'
 
 jobs:
-  build-and-push:
+  build-backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,18 +40,43 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set version from input
-        id: set-version
-        run: echo "::set-output name=VERSION::${{ github.event.inputs.version }}"
+      - name: Set version from input (backend)
+        id: set-version-backend
+        run: echo "::set-output name=VERSION::${{ github.event.inputs.backend-version }}"
 
-      - name: Build and push Docker image (backend)
-        id: build-push-backend
+      - name: Build and push Docker image for backend
         run: |
-          docker build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/backend:${{ steps.set-version.outputs.VERSION }} .
-          docker push ghcr.io/${{ github.repository }}/backend:${{ steps.set-version.outputs.VERSION }}
+          docker build --platform linux/amd64 -f .deploy/backend.Dockerfile  -t ghcr.io/${{ github.repository }}/backend:${{ steps.set-version-backend.outputs.VERSION }} .
+          docker push ghcr.io/${{ github.repository }}/backend:${{ steps.set-version-backend.outputs.VERSION }}
 
-      - name: Build and push Docker image (frontend)
-        id: build-push-frontend
+  build-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version from input (frontend)
+        id: set-version-frontend
+        run: echo "::set-output name=VERSION::${{ github.event.inputs.frontend-version }}"
+
+      - name: Build and push Docker image for frontend
         run: |
-          docker build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/frontend:${{ steps.set-version.outputs.VERSION }} .
-          docker push ghcr.io/${{ github.repository }}/frontend:${{ steps.set-version.outputs.VERSION }}
+          docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/frontend:${{ steps.set-version-frontend.outputs.VERSION }} .
+          docker push ghcr.io/${{ github.repository }}/frontend:${{ steps.set-version-frontend.outputs.VERSION }}
