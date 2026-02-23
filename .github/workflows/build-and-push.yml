@@ -41,24 +41,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image for backend (amd64)
+      - name: Build and push Docker image for backend
         run: |
           docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }} .
           docker push ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }}
 
-      - name: Build and push Docker image for backend (arm64)
-        run: |
-          docker build --platform linux/arm64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }} .
-          docker push ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }}
-
-      - name: Build and push Docker image for backend with latest tag (amd64)
+      - name: Build and push Docker image for backend with latest tag
         run: |
           docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/backend:latest .
-          docker push ghcr.io/${{ github.repository }}/backend:latest
-
-      - name: Build and push Docker image for backend with latest tag (arm64)
-        run: |
-          docker build --platform linux/arm64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/backend:latest .
           docker push ghcr.io/${{ github.repository }}/backend:latest
 
   build-frontend:
@@ -88,22 +78,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image for frontend (amd64)
+      - name: Build and push Docker image for frontend
         run: |
           docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }} .
           docker push ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }}
 
-      - name: Build and push Docker image for frontend (arm64)
-        run: |
-          docker build --platform linux/arm64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }} .
-          docker push ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }}
-
-      - name: Build and push Docker image for frontend with latest tag (amd64)
+      - name: Build and push Docker image for frontend with latest tag
         run: |
           docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/frontend:latest .
-          docker push ghcr.io/${{ github.repository }}/frontend:latest
-
-      - name: Build and push Docker image for frontend with latest tag (arm64)
-        run: |
-          docker build --platform linux/arm64 -f .deploy/frontend.Dockerfile -t ghcr.io/${{ github.repository }}/frontend:latest .
           docker push ghcr.io/${{ github.repository }}/frontend:latest
