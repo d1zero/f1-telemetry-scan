@@ -39,7 +39,7 @@ jobs:
 
       - name: Build and push Docker image for backend
         run: |
-          docker build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }} .
+          docker build --platform linux/amd64 -f .deploy/backend.Dockerfile -t ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }} .
           docker push ghcr.io/${{ github.repository }}/backend:${{ github.event.inputs.backend-version }}
 
   build-frontend:
@@ -67,5 +67,5 @@ jobs:
 
       - name: Build and push Docker image for frontend
         run: |
-          docker build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }} .
+          docker build --platform linux/amd64 -f .deploy/frontend.Dockerfile  -t ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }} .
           docker push ghcr.io/${{ github.repository }}/frontend:${{ github.event.inputs.frontend-version }}
